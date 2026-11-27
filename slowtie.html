@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#efe6ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Slowtie – Camera</title>
+<style>
+:root{--bg:#efe6ff;--pan:#f8f3ff;--ink:#2a1650;--pri:#8b5cf6;--pri2:#6d3fd1;--soft:#e0d0ff;--mut:#65558a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1532;--pan:#2a1f45;--ink:#f3eaff;--pri:#b794f6;--pri2:#d3bcff;--soft:#41326a;--mut:#bba9dd}}
+:root[data-theme="dark"]{--bg:#1d1532;--pan:#2a1f45;--ink:#f3eaff;--pri:#b794f6;--pri2:#d3bcff;--soft:#41326a;--mut:#bba9dd}
+*,*::before,*::after{box-sizing:inherit;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font:600 15px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;user-select:none;touch-action:manipulation}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+.bar{display:flex;align-items:center;gap:8px;padding:8px 12px}
+.logo{font-weight:800;font-size:22px;color:var(--pri2);letter-spacing:.3px;flex:1}
+.logo small{display:block;font-size:11px;font-weight:600;color:var(--mut);letter-spacing:0}
+.ib{min-width:44px;height:44px;border-radius:14px;background:var(--pan);border:2px solid var(--soft);font-size:15px;padding:0 10px}
+.ib.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.ib:disabled{opacity:.4}
+.pills{display:flex;gap:6px;padding:0 12px 6px;overflow-x:auto;justify-content:center}
+.pill{padding:5px 12px;border-radius:999px;background:var(--pan);border:2px solid var(--soft);font-size:14px;flex:none}
+.pill.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.pill:disabled{opacity:.45}
+#vf{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 10px}
+#cv{max-width:100%;max-height:100%;border-radius:22px;background:#150d26;box-shadow:0 8px 24px rgba(109,63,209,.25)}
+#vid{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none}
+.ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+#cd{font-size:120px;font-weight:800;color:#fff;text-shadow:0 4px 24px rgba(60,20,120,.7)}
+#ring{position:absolute;width:70px;height:70px;border:3px solid #fff;border-radius:50%;opacity:0;transform:scale(1.4);transition:.25s;pointer-events:none;box-shadow:0 0 8px rgba(0,0,0,.4)}
+#ring.go{opacity:1;transform:scale(1)}
+#info{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(42,22,80,.65);color:#fff;border-radius:999px;padding:3px 12px;font-size:12px;white-space:nowrap}
+#rt{position:absolute;top:34px;left:50%;transform:translateX(-50%);background:#e5365b;color:#fff;border-radius:999px;padding:2px 12px;font-size:14px;display:none}
+#start{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;z-index:5}
+#start .big{font-size:40px;font-weight:800;color:var(--pri2)}
+#start .go{background:var(--pri);color:#fff;font-weight:800;font-size:18px;padding:14px 36px;border-radius:999px;box-shadow:0 5px 0 var(--pri2)}
+#sf{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9;transition:opacity .08s}
+#sf.on{opacity:1}
+.ctl{background:var(--pan);border-radius:26px 26px 0 0;padding:8px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;justify-content:center;gap:8px}
+.modes .pill{padding:6px 18px}
+.shut{display:flex;align-items:center;justify-content:space-around}
+#sh{width:78px;height:78px;border-radius:50%;background:#fff;border:6px solid var(--pri);padding:0;position:relative}
+#sh::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--pri);transition:.15s}
+#sh.vid::after{background:#e5365b}
+#sh.rec::after{inset:18px;border-radius:8px;background:#e5365b}
+#th{width:52px;height:52px;border-radius:14px;background:var(--soft) center/cover;font-size:22px;padding:0}
+#toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(42,22,80,.9);color:#fff;border-radius:14px;padding:8px 14px;font-size:14px;max-width:90%;text-align:center;opacity:0;transition:.25s;pointer-events:none;z-index:8}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="logo">Slowtie<small id="spec">1080p · 30fps · H.264</small></div>
+  <button class="ib" id="fl" title="Flash">⚡</button>
+  <button class="ib" id="tm" title="Hẹn giờ">⏱ Tắt</button>
+  <button class="ib" id="cl" title="Độ đậm màu">🎨 Vừa</button>
+</div>
+<div class="pills" id="rp"></div>
+<div id="vf">
+  <canvas id="cv" width="1080" height="1920"></canvas>
+  <video id="vid" playsinline muted autoplay></video>
+  <div class="ov"><div id="cd"></div></div>
+  <div id="ring"></div><div id="info"></div><div id="rt">● 00:00</div>
+  <div id="start"><div class="big">Slowtie</div><div>Camera 1080p · 30fps · H.264<br>màu sâu, thực tế, không chói</div><button class="go" id="gob">Bật camera</button><div style="color:var(--mut);font-size:13px">Cho phép dùng camera và micro khi trình duyệt hỏi</div></div>
+</div>
+<div class="ctl">
+  <div class="row" id="ln"></div>
+  <div class="row modes" id="md"></div>
+  <div class="shut"><button class="ib" id="th" aria-label="Xem file vừa lưu">🖼️</button><button id="sh" aria-label="Chụp"></button><button class="ib" id="fp" style="width:52px;height:52px;font-size:22px" aria-label="Đổi camera trước/sau">🔄</button></div>
+</div>
+<div id="sf"></div><div id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s),cv=$('#cv'),vid=$('#vid');
+const RAT=[['9:16',9/16],['3:4',3/4],['1:1',1],['4:3',4/3],['16:9',16/9],['2:9',2/9]];
+const GR=[['Nhẹ',.4],['Vừa',.75],['Đậm',1]],TM=[0,3,5,10];
+let ri=0,mode='photo',facing='environment',flash=false,ti=0,gi=1,zoomV=1,rec=null,stream=null,track=null,caps={},busy=false,devs=[],devId=null,vw=0,vh=0,crop=[0,0,1,1],lastFile=null,lastUrl='',mime='',looping=false,recT=0,recI=0;
+
+/* ---------- WebGL: màu + chân dung, chạy trên GPU để không giật ---------- */
+const gl=cv.getContext('webgl',{preserveDrawingBuffer:true,alpha:false,powerPreference:'high-performance'});
+const VS='attribute vec2 p;varying vec2 v;void main(){v=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}';
+const FS=`precision mediump float;varying vec2 v;uniform sampler2D t;uniform vec4 crop;uniform float mir,port,zoom,k;uniform vec2 px;
+vec2 uv(vec2 p){p=(p-.5)/zoom+.5;if(mir>.5)p.x=1.-p.x;return crop.xy+p*crop.zw;}
+vec3 g(vec3 c){float bp=.04*k;c=max((c-bp)/(1.-bp),0.);c=mix(c,c*c*(3.-2.*c),.3*k);float l=dot(c,vec3(.2126,.7152,.0722));float s=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b));
+c=l+(c-l)*(1.15+.35*k*(1.-s));float gr=clamp((c.g-max(c.r,c.b))*5.,0.,1.);c=mix(c,l+(c-l)*(1.+.3*k),gr)*(1.-.07*k*gr);c=c/(1.+max(c-.82,0.)*.8)*1.05;return clamp(c,0.,1.);}
+void main(){vec3 c=texture2D(t,uv(v)).rgb;
+if(port>.5){vec2 d=(v-vec2(.5,.45))/vec2(.4,.5);float m=smoothstep(.8,1.5,length(d));vec3 s=c;
+for(int i=0;i<6;i++){float a=float(i)*1.0472;vec2 o=vec2(cos(a),sin(a))*px*m*22.;s+=texture2D(t,uv(v+o)).rgb+texture2D(t,uv(v+o*.5)).rgb;}c=mix(c,s/13.,m);}
+gl_FragColor=vec4(g(c),1.);}`;
+function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o}
+const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
+gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const ap=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(ap);gl.vertexAttribPointer(ap,2,gl.FLOAT,false,0,0);
+gl.bindTexture(gl.TEXTURE_2D,gl.createTexture());
+[[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]].forEach(([a,b])=>gl.texParameteri(gl.TEXTURE_2D,a,b));
+const U=n=>gl.getUniformLocation(pr,n);
+function draw(){
+  if(vid.readyState<2||!vid.videoWidth)return;
+  if(vid.videoWidth!==vw||vid.videoHeight!==vh)layout();
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,vid);
+  gl.uniform4fv(U('crop'),crop);gl.uniform1f(U('mir'),facing==='user'?1:0);gl.uniform1f(U('port'),mode==='portrait'?1:0);
+  gl.uniform1f(U('zoom'),zoomV);gl.uniform1f(U('k'),GR[gi][1]);gl.uniform2f(U('px'),1/cv.width,1/cv.height);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+}
+function layout(){
+  if(rec)return;
+  vw=vid.videoWidth;vh=vid.videoHeight;if(!vw)return;
+  const r=RAT[ri][1];let cw=vw,ch=vw/r;if(ch>vh){ch=vh;cw=vh*r}
+  const sc=Math.min(1,1920/Math.max(cw,ch)),w=Math.round(cw*sc/2)*2,h=Math.round(ch*sc/2)*2;
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;gl.viewport(0,0,w,h)}
+  crop=[(vw-cw)/2/vw,(vh-ch)/2/vh,cw/vw,ch/vh];
+}
+function loop(){draw();vid.requestVideoFrameCallback?vid.requestVideoFrameCallback(loop):requestAnimationFrame(loop)}
+
+/* ---------- âm thanh ---------- */
+let AC;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC}
+function beep(f,d,t,v,at){const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain(),s=c.currentTime+(at||0);o.type=t||'sine';o.frequency.value=f;g.gain.setValueAtTime(v||.15,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(c.destination);o.start(s);o.stop(s+d)}
+const sfx={shot:()=>{beep(1500,.04,'square',.12);beep(800,.09,'square',.12,.05)},start:()=>{beep(660,.12,'triangle');beep(990,.18,'triangle',.15,.12)},stop:()=>{beep(990,.12,'triangle');beep(520,.2,'triangle',.15,.12)},tick:()=>beep(760,.08,'sine',.15)};
+
+/* ---------- camera ---------- */
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),3200)}
+function pickMime(){if(!window.MediaRecorder)return'';return['video/mp4;codecs=avc1.640028,mp4a.40.2','video/mp4;codecs=avc1','video/webm;codecs=h264','video/mp4','video/webm;codecs=vp9','video/webm'].find(m=>MediaRecorder.isTypeSupported(m))||''}
+function stopCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null}
+async function start(){
+  stopCam();
+  const v={width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:30}};
+  if(devId)v.deviceId={exact:devId};else v.facingMode={ideal:facing};
+  try{stream=await navigator.mediaDevices.getUserMedia({video:v,audio:true})}
+  catch(e){try{stream=await navigator.mediaDevices.getUserMedia({video:v});toast('Không có quyền micro, video sẽ không có tiếng')}
+    catch(e2){toast('Không mở được camera. Hãy cho phép camera trong cài đặt trình duyệt, và mở app bằng link https.');return}}
+  vid.srcObject=stream;track=stream.getVideoTracks()[0];track.contentHint='motion';
+  try{await vid.play()}catch(e){}
+  caps=track.getCapabilities?track.getCapabilities():{};
+  try{await track.applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(e){}
+  mime=pickMime();
+  try{devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'&&/back|rear|environment/i.test(d.label))}catch(e){devs=[]}
+  vw=0;layout();zoomV=1;lensUI();flUI();info();
+  if(!looping){looping=true;loop()}
+}
+function info(){
+  const s=track.getSettings(),h=Math.min(s.width||0,s.height||0),f=Math.round(s.frameRate||0);
+  const codec=/avc1|h264/.test(mime)?'H.264':mime?'WebM/VP9':'không hỗ trợ quay';
+  $('#spec').textContent=`${h}p · ${f}fps · ${codec}`;$('#info').textContent=`${s.width}×${s.height} nguồn · ${f}fps`;
+  if(mime&&!/avc1|h264/.test(mime))toast('Máy/trình duyệt này chưa quay H.264 được, đang dùng định dạng thay thế');
+}
+async function setZoom(z){
+  const zc=caps.zoom;
+  if(zc&&z>=zc.min&&z<=zc.max){try{await track.applyConstraints({advanced:[{zoom:z}]});zoomV=1;cur=z;lensUI();return true}catch(e){}}
+  if(z>=1){zoomV=z;cur=z;lensUI();return true}return false
+}
+let cur=1;
+function lensUI(){
+  $('#ln').innerHTML=[.5,1,2].map(z=>`<button class="pill ${cur===z?'on':''}" data-z="${z}">${z}×</button>`).join('');
+}
+$('#ln').onclick=async e=>{
+  const z=+e.target.dataset.z;if(!z||rec)return;
+  if(z===.5){
+    if(caps.zoom&&caps.zoom.min<1){await setZoom(.5);return}
+    if(devs.length>1){const i=devs.findIndex(d=>d.deviceId===(track.getSettings().deviceId));devId=devs[(i+1)%devs.length].deviceId;facing='environment';cur=.5;await start();cur=.5;lensUI();toast('Đã thử ống kính phụ (0.5×). Bấm lại để đổi sang ống kính khác nếu chưa đúng');return}
+    toast('Trình duyệt chưa mở được ống kính 0.5× trên máy này');return}
+  if(z===1&&devs.length>1&&devId&&devId!==devs[0].deviceId){devId=devs[0].deviceId;await start()}
+  await setZoom(z);
+};
+
+/* ---------- flash ---------- */
+const flUI=()=>{const ok=facing==='user'||caps.torch;$('#fl').disabled=!ok;$('#fl').classList.toggle('on',flash&&ok);$('#fl').textContent=flash?'⚡ Bật':'⚡ Tắt'};
+async function torch(on){if(facing==='user'||!caps.torch)return;try{await track.applyConstraints({advanced:[{torch:on}]})}catch(e){}}
+$('#fl').onclick=async()=>{flash=!flash;flUI();if(mode==='video'&&rec)torch(flash)};
+
+/* ---------- chụp / quay ---------- */
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function countdown(){
+  const n=TM[ti];for(let i=n;i>0;i--){$('#cd').textContent=i;sfx.tick();await wait(1000)}$('#cd').textContent='';
+}
+function save(b,ext){
+  const n='Slowtie_'+new Date().toISOString().replace(/[-:T]/g,'').slice(0,14)+'.'+ext;
+  const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();
+  lastFile=new File([b],n,{type:b.type});lastUrl=u;
+  const th=$('#th');if(ext==='jpg'){th.style.backgroundImage=`url(${u})`;th.textContent=''}else{th.style.backgroundImage='';th.textContent='🎬'}
+  toast('Đã lưu '+n+' vào thư mục Tải xuống');
+}
+$('#th').onclick=async()=>{
+  if(!lastFile){toast('Chưa có ảnh/video nào');return}
+  try{if(navigator.canShare&&navigator.canShare({files:[lastFile]})){await navigator.share({files:[lastFile]});return}}catch(e){return}
+  window.open(lastUrl,'_blank');
+};
+async function photo(){
+  if(busy)return;busy=true;ac();
+  await countdown();
+  if(flash){if(facing==='user'){$('#sf').classList.add('on');await wait(350)}else{await torch(true);await wait(400)}}
+  sfx.shot();draw();
+  cv.toBlob(b=>{save(b,'jpg')},'image/jpeg',.95);
+  $('#sf').classList.remove('on');if(flash)torch(false);
+  busy=false;
+}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+async function video(){
+  if(rec){rec.stop();return}
+  if(busy)return;
+  if(!mime){toast('Trình duyệt này không hỗ trợ quay video');return}
+  busy=true;ac();await countdown();
+  const cs=cv.captureStream(30);stream.getAudioTracks().forEach(a=>cs.addTrack(a.clone()));
+  const chunks=[];
+  try{rec=new MediaRecorder(cs,{mimeType:mime,videoBitsPerSecond:14e6,audioBitsPerSecond:128e3})}catch(e){rec=null;busy=false;toast('Không bắt đầu quay được');return}
+  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+  rec.onstop=()=>{
+    clearInterval(recI);sfx.stop();torch(false);
+    const b=new Blob(chunks,{type:mime.split(';')[0]});save(b,mime.includes('mp4')?'mp4':'webm');
+    rec=null;busy=false;$('#sh').classList.remove('rec');$('#rt').style.display='none';ui(true);layout();
+  };
+  ui(false);if(flash)await torch(true);
+  sfx.start();rec.start(1000);recT=Date.now();
+  $('#sh').classList.add('rec');$('#rt').style.display='block';
+  recI=setInterval(()=>{$('#rt').textContent='● '+fmt(Math.floor((Date.now()-recT)/1000))},500);
+}
+$('#sh').onclick=()=>mode==='video'?video():photo();
+function ui(on){document.querySelectorAll('#rp .pill,#fp,#md .pill,#ln .pill').forEach(b=>b.disabled=!on)}
+
+/* ---------- giao diện ---------- */
+$('#rp').innerHTML=RAT.map((r,i)=>`<button class="pill ${i===ri?'on':''}" data-i="${i}">${r[0]}</button>`).join('');
+$('#rp').onclick=e=>{const i=e.target.dataset.i;if(i==null||rec)return;ri=+i;document.querySelectorAll('#rp .pill').forEach((b,j)=>b.classList.toggle('on',j===ri));layout()};
+$('#md').innerHTML=[['photo','Ảnh'],['portrait','Chân dung'],['video','Video']].map(m=>`<button class="pill ${m[0]===mode?'on':''}" data-m="${m[0]}">${m[1]}</button>`).join('');
+$('#md').onclick=e=>{const m=e.target.dataset.m;if(!m||rec)return;mode=m;document.querySelectorAll('#md .pill').forEach(b=>b.classList.toggle('on',b.dataset.m===m));$('#sh').classList.toggle('vid',m==='video');if(m==='portrait')toast('Chân dung: làm mờ nền giả lập, giữ rõ chủ thể ở giữa khung')};
+$('#tm').onclick=()=>{ti=(ti+1)%TM.length;$('#tm').textContent='⏱ '+(TM[ti]?TM[ti]+'s':'Tắt');$('#tm').classList.toggle('on',!!TM[ti])};
+$('#cl').onclick=()=>{gi=(gi+1)%GR.length;$('#cl').textContent='🎨 '+GR[gi][0]};
+$('#fp').onclick=async()=>{if(rec||busy)return;facing=facing==='user'?'environment':'user';devId=null;cur=1;await start()};
+$('#vf').addEventListener('click',async e=>{
+  if(e.target.closest('#start'))return;
+  const r=$('#vf').getBoundingClientRect(),rg=$('#ring');
+  rg.style.left=(e.clientX-r.left-35)+'px';rg.style.top=(e.clientY-r.top-35)+'px';rg.classList.remove('go');void rg.offsetWidth;rg.classList.add('go');setTimeout(()=>rg.classList.remove('go'),700);
+  const c=cv.getBoundingClientRect();
+  try{await track.applyConstraints({advanced:[{focusMode:'single-shot',pointsOfInterest:[{x:Math.min(1,Math.max(0,(e.clientX-c.left)/c.width)),y:Math.min(1,Math.max(0,(e.clientY-c.top)/c.height))}]}]});setTimeout(()=>track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{}),3000)}catch(x){}
+});
+$('#gob').onclick=async()=>{ac();$('#start').style.display='none';await start();if(!stream)$('#start').style.display='flex'};
+lensUI();flUI();
+if('wakeLock'in navigator)document.addEventListener('visibilitychange',()=>{if(!document.hidden&&stream&&!rec)navigator.wakeLock.request('screen').catch(()=>{})});
+</script>
+</body>
+</html>
